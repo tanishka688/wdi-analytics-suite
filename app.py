@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 # --- SYLLABUS MODELS IMPORT ---
 # Unit II: Regression
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import Pipeline
 
 # Unit III: Classification
@@ -20,71 +20,145 @@ from sklearn.linear_model import LogisticRegression
 
 # Unit VI: Model Performance
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, GradientBoostingRegressor, GradientBoostingClassifier
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 
-# --- THEME: BLACK & WHITE (OBSIDIAN) ---
+# --- PAGE CONFIG ---
 st.set_page_config(page_title="World Development Predictor", layout="wide", page_icon="🌍")
 
+# --- CSS STYLING (FIXED UI) ---
 st.markdown("""
 <style>
-    /* Strict Black & White Theme */
-    .stApp { background-color: #000000; color: #ffffff; }
-    h1, h2, h3 { color: #ffffff !important; font-family: sans-serif; }
+    /* 1. Main Application Background */
+    .stApp {
+        background-color: #F3E5F5; /* Light Purple */
+    }
+
+    /* 2. GLOBAL TEXT COLOR FIX (Force Dark Purple) */
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, 
+    .stApp p, .stApp div, .stApp span, .stApp label, .stApp li {
+        color: #2E003E !important;
+    }
     
-    /* Sidebar */
-    [data-testid="stSidebar"] { background-color: #111111; border-right: 1px solid #333; }
+    /* 3. METRICS (Big Numbers) */
+    [data-testid="stMetricValue"] {
+        color: #4A148C !important;
+    }
+    [data-testid="stMetricLabel"] {
+        color: #6A1B9A !important;
+    }
     
-    /* Inputs */
-    .stSelectbox, .stNumberInput { color: white; }
-    div[data-baseweb="select"] > div { background-color: #222; color: white; border-color: #444; }
+    /* 4. SIDEBAR (Light Purple - Consistent with main app) */
+    [data-testid="stSidebar"] {
+        background-color: #E1BEE7; /* Light purple - more visible */
+        border-right: 3px solid #7B1FA2; /* Purple accent border */
+    }
+    [data-testid="stSidebar"] * {
+        color: #2E003E !important; /* Dark purple text - readable */
+    }
     
-    /* Buttons */
+    /* Sidebar headings - stronger */
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3, [data-testid="stSidebar"] h4 {
+        color: #4A148C !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Sidebar radio buttons and labels - ensure visibility */
+    [data-testid="stSidebar"] label {
+        color: #2E003E !important;
+        font-weight: 500 !important;
+    }
+
+    /* 5. BUTTONS */
     .stButton > button {
-        background-color: #222; color: white; border: 1px solid #555;
-        border-radius: 4px; font-weight: bold;
+        background-color: #6A1B9A;
+        color: white !important; 
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
     }
-    .stButton > button:hover { border-color: #fff; background-color: #333; }
-    
-    /* Cards/Metrics */
-    div[data-testid="metric-container"] {
-        background-color: #1a1a1a; border: 1px solid #333; color: white;
+    .stButton > button:hover {
+        background-color: #8E24AA;
+    }
+
+    /* ================================================================= */
+    /* 6. CRITICAL FIX: INPUTS & DROPDOWNS (White Background + Dark Text) */
+    /* ================================================================= */
+
+    /* NUMBER INPUTS: Target the container holding the value and buttons */
+    [data-testid="stNumberInput"] div[data-baseweb="input"] {
+        background-color: #ffffff !important;
+        border: 1px solid #D1C4E9 !important;
+        border-radius: 6px !important;
+    }
+
+    /* NUMBER INPUTS: Target the actual typing area */
+    [data-testid="stNumberInput"] input {
+        background-color: #ffffff !important; /* Force White */
+        color: #2E003E !important; /* Force Dark Text */
+        -webkit-text-fill-color: #2E003E !important;
+        caret-color: #2E003E !important;
+    }
+
+    /* DROPDOWNS (SELECTBOX): Target the main clickable box */
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        border: 1px solid #D1C4E9 !important;
+        color: #2E003E !important;
     }
     
-    /* Tables */
-    [data-testid="stDataFrame"] { border: 1px solid #333; }
-    
-    /* Prediction Box */
+    /* DROPDOWNS: Text inside the box */
+    [data-testid="stSelectbox"] div[data-baseweb="select"] span {
+        color: #2E003E !important;
+    }
+
+    /* DROPDOWN MENU LIST (The popover) */
+    ul[data-baseweb="menu"] {
+        background-color: #ffffff !important;
+    }
+    li[data-baseweb="option"] {
+        background-color: #ffffff !important;
+        color: #2E003E !important;
+    }
+    li[data-baseweb="option"]:hover {
+        background-color: #F3E5F5 !important;
+    }
+
+    /* ================================================================= */
+
+    /* 7. CUSTOM INFO BOXES */
     .prediction-box {
-        background-color: #0a2a0a;
-        border: 3px solid #00ff00;
+        background-color: #FFFFFF;
+        border: 2px solid #7B1FA2;
         padding: 25px;
         border-radius: 12px;
         margin: 20px 0;
-        box-shadow: 0 0 20px rgba(0,255,0,0.3);
+        box-shadow: 0 4px 15px rgba(123, 31, 162, 0.2);
     }
-    
     .insight-box {
-        background-color: #1a1a2e;
-        border: 2px solid #4a90e2;
+        background-color: #EDE7F6;
+        border-left: 5px solid #5E35B1;
         padding: 20px;
-        border-radius: 10px;
+        border-radius: 4px;
         margin: 15px 0;
     }
-    
     .warning-box {
-        background-color: #2a1a0a;
-        border: 2px solid #ff9500;
+        background-color: #FFF3E0;
+        border: 1px solid #FFB74D;
         padding: 15px;
         border-radius: 8px;
         margin: 10px 0;
     }
+    
+    /* Helper text */
     .explain {
-        background-color: #111118;
-        border: 1px solid #444;
+        background-color: #ffffff;
+        border: 1px solid #D1C4E9;
         padding: 12px;
         border-radius: 8px;
         margin-bottom: 10px;
+        font-size: 0.9em;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -287,11 +361,11 @@ if analysis_mode == "Economic Forecasting (Regression)":
     c3.metric("R² score", f"{r2:.3f}")
     c4.metric("Explained variance (as %)", f"{r2*100:.1f}%")
 
-    # plot actual vs predicted
+    # plot actual vs predicted (Updated to Plotly White)
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=y_test, y=preds, mode='markers', marker=dict(color='lightgreen', size=6, opacity=0.6), name='predictions'))
-    fig.add_trace(go.Scatter(x=[y.min(), y.max()], y=[y.min(), y.max()], mode='lines', line=dict(color='white', dash='dash', width=2), name='perfect'))
-    fig.update_layout(template="plotly_dark", title="Actual vs Predicted GDP per capita", xaxis_title="Actual GDP", yaxis_title="Predicted GDP", height=400)
+    fig.add_trace(go.Scatter(x=y_test, y=preds, mode='markers', marker=dict(color='#8E24AA', size=6, opacity=0.6), name='predictions'))
+    fig.add_trace(go.Scatter(x=[y.min(), y.max()], y=[y.min(), y.max()], mode='lines', line=dict(color='black', dash='dash', width=2), name='perfect'))
+    fig.update_layout(template="plotly_white", title="Actual vs Predicted GDP per capita", xaxis_title="Actual GDP", yaxis_title="Predicted GDP", height=400, plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig, use_container_width=True)
 
     # interactive input with explanation examples
@@ -422,14 +496,14 @@ elif analysis_mode == "Country Classification (High-Accuracy AI)":
     with col1:
         st.markdown("Confusion matrix")
         cm = confusion_matrix(y_test, preds)
-        fig_cm = px.imshow(cm, text_auto=True, color_continuous_scale="Greens", labels=dict(x="Predicted", y="Actual"), x=['Low', 'High'], y=['Low', 'High'])
-        fig_cm.update_layout(template="plotly_dark", height=350)
+        fig_cm = px.imshow(cm, text_auto=True, color_continuous_scale="Purples", labels=dict(x="Predicted", y="Actual"), x=['Low', 'High'], y=['Low', 'High'])
+        fig_cm.update_layout(template="plotly_white", height=350)
         st.plotly_chart(fig_cm, use_container_width=True)
     with col2:
         st.markdown("Feature importance")
         importance = pd.DataFrame({'Feature': valid_feats, 'Importance': model.feature_importances_}).sort_values('Importance', ascending=False)
-        fig_imp = px.bar(importance, x='Importance', y='Feature', orientation='h', color='Importance', color_continuous_scale='Greens')
-        fig_imp.update_layout(template="plotly_dark", height=350, showlegend=False)
+        fig_imp = px.bar(importance, x='Importance', y='Feature', orientation='h', color='Importance', color_continuous_scale='Purples')
+        fig_imp.update_layout(template="plotly_white", height=350, showlegend=False)
         st.plotly_chart(fig_imp, use_container_width=True)
 
     # interactive classification with explanations in the input form
@@ -541,8 +615,8 @@ elif analysis_mode == "Model Performance Comparison":
     with col1:
         st.dataframe(reg_df.style.format({'R² Score': '{:.3f}', 'RMSE': '{:,.0f}'}), use_container_width=True, hide_index=True)
     with col2:
-        fig_reg = px.bar(reg_df, x='Model', y='R² Score', color='R² Score', color_continuous_scale='Greens', title="Regression comparison")
-        fig_reg.update_layout(template="plotly_dark", showlegend=False)
+        fig_reg = px.bar(reg_df, x='Model', y='R² Score', color='R² Score', color_continuous_scale='Purples', title="Regression comparison")
+        fig_reg.update_layout(template="plotly_white", showlegend=False)
         st.plotly_chart(fig_reg, use_container_width=True)
 
     # classification models
@@ -574,9 +648,9 @@ elif analysis_mode == "Model Performance Comparison":
     with col1:
         st.dataframe(clf_df.style.format({'Accuracy': '{:.1%}', 'Precision': '{:.1%}', 'Recall': '{:.1%}', 'F1 Score': '{:.1%}'}), use_container_width=True, hide_index=True)
     with col2:
-        fig_clf = px.bar(clf_df, x='Model', y='Accuracy', color='Accuracy', color_continuous_scale='Greens', title="Classification accuracy")
-        fig_clf.update_layout(template="plotly_dark", showlegend=False)
-        fig_clf.add_hline(y=0.9, line_dash="dash", line_color="cyan", annotation_text="90% threshold")
+        fig_clf = px.bar(clf_df, x='Model', y='Accuracy', color='Accuracy', color_continuous_scale='Purples', title="Classification accuracy")
+        fig_clf.update_layout(template="plotly_white", showlegend=False)
+        fig_clf.add_hline(y=0.9, line_dash="dash", line_color="orange", annotation_text="90% threshold")
         st.plotly_chart(fig_clf, use_container_width=True)
 
     # direct recommendation block
@@ -587,5 +661,3 @@ elif analysis_mode == "Model Performance Comparison":
     st.markdown(f"- Best regression model: {best_reg['Model']} (R²={best_reg['R² Score']:.3f}). Practical meaning: use this model if you need accurate GDP point estimates. It balances bias and variance for this dataset.")
     st.markdown(f"- Best classification model: {best_clf['Model']} (Accuracy={best_clf['Accuracy']:.1%}). Practical meaning: use this model for policy screening — it reliably separates high vs lower income groups on these indicators.")
     st.info("Use regression models for point forecasts and classification models for categorical policy decisions (e.g., eligibility for a program).")
-
-# end
