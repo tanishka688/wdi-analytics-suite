@@ -410,7 +410,8 @@ if analysis_mode == "Economic Forecasting (Regression)":
         submit = st.form_submit_button("Predict GDP per capita")
 
         if submit:
-            pred_df = pd.DataFrame([input_data])
+            # FIX: Ensure column order matches training data exactly
+            pred_df = pd.DataFrame([input_data])[valid_feats]
             pred_value = float(model.predict(pred_df)[0])
 
             # class bucket and remarks
@@ -556,7 +557,8 @@ elif analysis_mode == "Country Classification (High-Accuracy AI)":
         submit = st.form_submit_button("Classify country")
 
         if submit:
-            pred_df = pd.DataFrame([input_data])
+            # FIX: Ensure column order matches training data exactly
+            pred_df = pd.DataFrame([input_data])[valid_feats]
             pred_class = int(model.predict(pred_df)[0])
             pred_proba = model.predict_proba(pred_df)[0]
             conf = pred_proba[pred_class]
